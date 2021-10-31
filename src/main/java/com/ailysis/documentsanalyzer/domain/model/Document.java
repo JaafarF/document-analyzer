@@ -24,11 +24,14 @@ public class Document {
     @Column(name = "title")
     private String title;
 
-    @Column(name = "initial_text")
-    private String initialContent;
+    @Column(name = "content", length = 10000)
+    private String content;
+
+    @Column(name = "path")
+    private String path;
 
     @Column(name = "size")
-    private Integer size;
+    private String size;
 
     @Column(name = "language")
     @Enumerated(EnumType.ORDINAL)
@@ -38,7 +41,7 @@ public class Document {
     private String version;
 
     @OneToMany(mappedBy = "document",
-            cascade = {CascadeType.PERSIST})
+            cascade = {CascadeType.ALL})
     private List<Category> categories;
 
     public void addCategory(Category category) {
