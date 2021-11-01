@@ -40,8 +40,8 @@ public class Document {
     @Column(name = "version")
     private String version;
 
-    @OneToMany(mappedBy = "document",
-            cascade = {CascadeType.ALL})
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_id")
     private List<Category> categories;
 
     public void addCategory(Category category) {
@@ -49,7 +49,6 @@ public class Document {
             categories = new ArrayList<>();
         }
         categories.add(category);
-        category.setDocument(this);
     }
 
 }

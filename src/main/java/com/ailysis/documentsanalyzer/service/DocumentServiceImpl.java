@@ -3,19 +3,30 @@ package com.ailysis.documentsanalyzer.service;
 import ai.expert.nlapi.v2.cloud.Categorizer;
 import ai.expert.nlapi.v2.message.CategorizeResponse;
 import com.ailysis.documentsanalyzer.domain.dto.DocumentRequestDto;
+import com.ailysis.documentsanalyzer.domain.dto.DocumentResponseDto;
 import com.ailysis.documentsanalyzer.domain.model.Document;
 import com.ailysis.documentsanalyzer.exception.DocumentNameExistsException;
 import com.ailysis.documentsanalyzer.repository.DocumentRepository;
+import com.ailysis.documentsanalyzer.utils.DocumentMapper;
 import com.ailysis.documentsanalyzer.utils.FilesUtils;
 import com.ailysis.documentsanalyzer.utils.NlpAuthentication;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.NoResultException;
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.ailysis.documentsanalyzer.constant.Contants.USER_FOLDER;
 
 @Service
 @Transactional
@@ -33,26 +44,50 @@ public class DocumentServiceImpl implements DocumentService{
 
 
     @Override
-    public List<Document> findAllDocuments() {
-        return this.documentRepository.findAll();
+    public List<DocumentResponseDto> findAllDocuments() {
+        List<Document> documents = this.documentRepository.findAll();
+        List<DocumentResponseDto> dtos = new ArrayList<>();
+        documents.forEach(doc -> {
+            DocumentResponseDto dto = DocumentMapper.mapToDocumentResponseDto(doc);
+            dtos.add(dto);
+        });
+        return dtos;
     }
 
     @Override
-    public List<Document> findDocumentsByCategory(String categoryBaseId) {
-        List<Document> documents = this.documentRepository.findByCategories_CategoryBase_Id(categoryBaseId);
-        return documents;
+    public List<DocumentResponseDto> findDocumentsByCategory(String categoryBaseId) {
+        List<Document> documents = this.documentRepository.findByCategoriesCategoryBaseId(categoryBaseId);
+        List<DocumentResponseDto> dtos = new ArrayList<>();
+        documents.forEach(doc -> {
+            DocumentResponseDto dto = DocumentMapper.mapToDocumentResponseDto(doc);
+            dtos.add(dto);
+        });
+        return dtos;
     }
 
     @Override
-    public Document saveDocument(DocumentRequestDto documentDto) throws IOException, DocumentNameExistsException {
+    public DocumentResponseDto saveDocument(MultipartFile documentDto) throws IOException, DocumentNameExistsException {
         Document document = new Document();
-        // Reduce content size
-        documentDto = FilesUtils.reduceFile(documentDto);
+
+        String fileName = documentDto.getOriginalFilename();
+        long size = documentDto.getSize();
+        Path filePath = Paths.get(USER_FOLDER + documentDto.getOriginalFilename());
+        Path newFile = Files.createFile(filePath);
+        documentDto.transferTo(newFile);
+        String content = FilesUtils.reduceFile(Files.readString(newFile));
+
+        // Fill document data
+        document.setContent(content);
+        document.setTitle(fileName);
+        document.setSize(FileUtils.byteCountToDisplaySize(size));
+        document.setPath(filePath.toString());
+
+
 
         try {
             // Call nlp API Categorize
             Categorizer categorizer = nlpAuthentication.createCategorizer();
-            CategorizeResponse categorization = categorizer.categorize(documentDto.getContent());
+            CategorizeResponse categorization = categorizer.categorize(content);
 
             // Fill document object from api response
             document.setLanguage(categorization.getData().getLanguage());
@@ -62,16 +97,8 @@ public class DocumentServiceImpl implements DocumentService{
             ex.printStackTrace();
         }
 
-        // Save the document to the file system
-        DocumentRequestDto fileDto = FilesUtils.saveFile(documentDto.getContent(), documentDto.getTitle());
-
-        // Fill document data
-        document.setContent(fileDto.getContent());
-        document.setTitle(fileDto.getTitle());
-        document.setSize(fileDto.getSize());
-        document.setPath(fileDto.getPath());
         // Save document to DB
-        return this.documentRepository.save(document);
+        return DocumentMapper.mapToDocumentResponseDto(this.documentRepository.save(document));
     }
 
     @Override

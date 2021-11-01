@@ -31,17 +31,17 @@ public class CategoryBase {
             )
     private List<Hierarchy> hierarchies;
 
-    @OneToMany(mappedBy = "categoryBase")
+    /*@OneToMany(mappedBy = "categoryBase")
     @JsonIgnore
-    private List<Category> categories;
+    private List<Category> categories;*/
 
-    public void addCategory(Category category) {
+    /*public void addCategory(Category category) {
         if (categories == null) {
             categories = new ArrayList<>();
         }
         categories.add(category);
         category.setCategoryBase(this);
-    }
+    }*/
 
     public void addHierarchy(Hierarchy hierarchy) {
         if (hierarchies == null) {

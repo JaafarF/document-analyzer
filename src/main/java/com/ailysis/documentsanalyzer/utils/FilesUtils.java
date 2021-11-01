@@ -37,11 +37,11 @@ public class FilesUtils {
         return fileDto;
     }
 
-    public static DocumentRequestDto reduceFile(DocumentRequestDto documentRequestDto) {
-        if (documentRequestDto.getContent().length() > 10000) {
-            documentRequestDto.setContent(documentRequestDto.getContent().substring(0, 9999));
+    public static String reduceFile(String content) {
+        if (content.length() > 10000) {
+            return content.substring(0, 9999);
         }
-        return documentRequestDto;
+        return content;
     }
 
     public static void deleteFile(String path) throws IOException {

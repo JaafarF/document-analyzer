@@ -37,14 +37,9 @@ public class Category {
     @JoinColumn(name = "category_id")
     private List<Position> positions;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.PERSIST, optional = false)
     @JoinColumn(name = "category_base_id")
     private CategoryBase categoryBase;
-
-    @ManyToOne
-    @JoinColumn(name = "document_id")
-    @JsonIgnore
-    private Document document;
 
     public void addPosition(Position position) {
         if (positions == null) {

@@ -34,7 +34,7 @@ public class CategoryServiceImpl implements CategoryService {
             }
 
             CategoryBase categoryBase = categoryBaseService.mapCategoryBaseFromApi(apiCategory);
-            categoryBase.addCategory(category);
+            category.setCategoryBase(categoryBase);
             document.addCategory(category);
             categories.add(category);
         }
