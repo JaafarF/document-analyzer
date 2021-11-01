@@ -69,25 +69,20 @@ public class DocumentServiceImpl implements DocumentService{
     public DocumentResponseDto saveDocument(MultipartFile documentDto) throws IOException, DocumentNameExistsException {
         Document document = new Document();
 
-        String fileName = documentDto.getOriginalFilename();
-        long size = documentDto.getSize();
-        Path filePath = Paths.get(USER_FOLDER + documentDto.getOriginalFilename());
-        Path newFile = Files.createFile(filePath);
-        documentDto.transferTo(newFile);
-        String content = FilesUtils.reduceFile(Files.readString(newFile));
+        DocumentRequestDto drdto = FilesUtils.processAndSaveFile(documentDto);
 
         // Fill document data
-        document.setContent(content);
-        document.setTitle(fileName);
-        document.setSize(FileUtils.byteCountToDisplaySize(size));
-        document.setPath(filePath.toString());
+        document.setContent(drdto.getContent());
+        document.setTitle(drdto.getTitle());
+        document.setSize(drdto.getSize());
+        document.setPath(drdto.getPath());
 
 
 
         try {
             // Call nlp API Categorize
             Categorizer categorizer = nlpAuthentication.createCategorizer();
-            CategorizeResponse categorization = categorizer.categorize(content);
+            CategorizeResponse categorization = categorizer.categorize(drdto.getContent());
 
             // Fill document object from api response
             document.setLanguage(categorization.getData().getLanguage());
