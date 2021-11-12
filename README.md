@@ -1,4 +1,4 @@
-# userscreenmanager
+# document-analyzer
 
 This project was Spring boot - hibernate - and MySql
 
